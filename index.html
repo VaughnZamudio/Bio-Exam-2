@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bio Exam 2 — Flashcard Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #17171a;
+    --surface2: #1e1e23;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0ede8;
+    --text2: #9c9896;
+    --text3: #5a5856;
+    --accent: #e8d5a3;
+    --accent2: #c4a96a;
+    --know: #3a7a5c;
+    --know-bg: rgba(58,122,92,0.15);
+    --know-border: rgba(58,122,92,0.4);
+    --learn: #a05035;
+    --learn-bg: rgba(160,80,53,0.15);
+    --learn-border: rgba(160,80,53,0.4);
+    --card-h: 340px;
+    --radius: 16px;
+    --transition: 0.55s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GLOW ── */
+  .glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232,213,163,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* ── LAYOUT ── */
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 0 32px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .header-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .header-left h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .header-left p {
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+  }
+  .stat {
+    text-align: right;
+  }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+  .stat-divider { width: 1px; height: 40px; background: var(--border); }
+
+  /* ── CONTROLS BAR ── */
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  /* System filters */
+  .filter-scroll {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+  }
+  .filter-btn:hover { border-color: var(--accent2); color: var(--accent); }
+  .filter-btn.active {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #0f0f11;
+    font-weight: 500;
+  }
+
+  /* Mode toggle */
+  .mode-group {
+    display: flex;
+    gap: 6px;
+  }
+  .mode-btn {
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .mode-btn:hover { color: var(--text); border-color: var(--border2); }
+  .mode-btn.active {
+    background: var(--surface2);
+    border-color: var(--border2);
+    color: var(--text);
+  }
+  .mode-btn.learn-mode.active {
+    background: var(--learn-bg);
+    border-color: var(--learn-border);
+    color: #e07050;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .progress-bar-wrap {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+  .progress-know {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: #5aab84;
+    white-space: nowrap;
+  }
+
+  /* ── FLASHCARD ── */
+  .card-scene {
+    perspective: 1400px;
+    height: var(--card-h);
+    cursor: pointer;
+    margin-bottom: 20px;
+    user-select: none;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform var(--transition);
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    padding: 36px 40px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .card-face::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,213,163,0.2), transparent);
+  }
+  .card-back {
+    transform: rotateY(180deg);
+    justify-content: flex-start;
+    overflow-y: auto;
+  }
+
+  .card-system-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid;
+    margin-bottom: 20px;
+    width: fit-content;
+    flex-shrink: 0;
+  }
+  .card-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .card-question {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .card-flip-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    margin-top: 16px;
+    flex-shrink: 0;
+  }
+  .card-number {
+    position: absolute;
+    top: 20px; right: 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .card-answer {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    flex: 1;
+    margin-bottom: 16px;
+  }
+  .card-hint-box {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    border-left: 3px solid var(--accent2);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text2);
+    flex-shrink: 0;
+    margin-top: auto;
+  }
+  .card-hint-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+
+  /* ── CARD STATUS STRIPE ── */
+  .card-status-stripe {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: var(--radius) 0 0 var(--radius);
+    transition: background 0.3s;
+  }
+  .card-status-stripe.know { background: var(--know); }
+  .card-status-stripe.learn { background: var(--learn); }
+
+  /* ── CARD ACTIONS ── */
+  .card-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .action-group { display: flex; gap: 8px; }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--surface2); color: var(--text); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-know {
+    border-color: var(--know-border);
+    color: #5aab84;
+    background: var(--know-bg);
+  }
+  .btn-know:hover { background: rgba(58,122,92,0.25); color: #6acc98; }
+
+  .btn-learn {
+    border-color: var(--learn-border);
+    color: #e07050;
+    background: var(--learn-bg);
+  }
+  .btn-learn:hover { background: rgba(160,80,53,0.25); color: #f08060; }
+
+  .btn-icon {
+    padding: 10px 14px;
+  }
+
+  /* ── NAV ── */
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+  }
+  .nav-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text2);
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+  .nav-counter {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text3);
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* ── DECK TOOLS ── */
+  .deck-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .tool-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tool-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+  .tool-btn.danger:hover { color: #e07050; border-color: var(--learn-border); }
+
+  /* ── SYSTEM PROGRESS PANEL ── */
+  .system-panel {
+    margin-bottom: 32px;
+  }
+  .panel-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+  .system-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+  .system-item {
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .system-item:hover { border-color: var(--border2); background: var(--surface2); }
+  .system-item-name {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .system-item-bar {
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .system-item-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3a7a5c, #5aab84);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .system-item-count {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── KEYBOARD HINT ── */
+  .keyboard-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 16px 0;
+    margin-top: 8px;
+  }
+  .kbd-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 7px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text2);
+    min-width: 24px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 100px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    display: none;
+  }
+  .empty-state.visible { display: block; }
+  .empty-emoji { font-size: 48px; margin-bottom: 16px; }
+  .empty-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .empty-sub { font-size: 14px; color: var(--text3); margin-bottom: 20px; }
+
+  /* ── MODAL (Know/Don't Know list) ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    max-width: 680px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    font-weight: 400;
+  }
+  .modal-close {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+  .modal-body {
+    overflow-y: auto;
+    padding: 16px 24px;
+    flex: 1;
+  }
+  .modal-card-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .modal-card-item:last-child { border-bottom: none; }
+  .modal-card-sys {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    white-space: nowrap;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .modal-card-q { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── CARD SWIPE ANIM ── */
+  @keyframes slideRight {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(60px); opacity: 0; }
+  }
+  @keyframes slideLeft {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-60px); opacity: 0; }
+  }
+  @keyframes slideIn {
+    0% { transform: translateX(-30px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .card-scene.animating .card-inner { animation: slideLeft 0.2s ease forwards; }
+  .card-scene.animating-prev .card-inner { animation: slideRight 0.2s ease forwards; }
+  .card-scene.slide-in .card-inner { animation: slideIn 0.25s ease forwards; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .header-stats { align-self: flex-start; }
+    .card-face { padding: 24px 20px; }
+    .card-question { font-size: 18px; }
+    .btn span { display: none; }
+    :root { --card-h: 320px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Cards to Review</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <h1>Bio Exam 2<br><em>Flashcard Deck</em></h1>
+      <p id="deckMode">ALL SYSTEMS · <span id="deckCount">0</span> CARDS</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat">
+        <div class="stat-num" id="statKnow">0</div>
+        <div class="stat-label">Know it</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <div class="stat-num" id="statLearn">0</div>
+        <div class="stat-label">Need work</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <div class="stat-num" id="statLeft">0</div>
+        <div class="stat-label">Unseen</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SYSTEM FILTER -->
+  <div class="controls-bar">
+    <div class="filter-scroll" id="filters"></div>
+  </div>
+
+  <!-- MODE TOGGLE + TOOLS -->
+  <div class="controls-bar" style="margin-bottom:16px;">
+    <div class="mode-group">
+      <button class="mode-btn active" onclick="setMode('all')" id="modeAll">All cards</button>
+      <button class="mode-btn learn-mode" onclick="setMode('learn')" id="modeLearn">Need work only</button>
+      <button class="mode-btn" onclick="setMode('unseen')" id="modeUnseen">Unseen only</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-row">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-know" id="progressKnow">0 known</div>
+    <div class="progress-text" id="progressText">0 / 0</div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card-scene" id="cardScene" onclick="flipCard()">
+    <div class="card-inner" id="cardInner">
+      <!-- FRONT -->
+      <div class="card-face" id="cardFront">
+        <div class="card-status-stripe" id="frontStripe"></div>
+        <div class="card-number" id="cardNumber"></div>
+        <div class="card-system-tag" id="frontTag"></div>
+        <div class="card-question" id="cardQ">Loading...</div>
+        <div class="card-flip-hint">tap or press <kbd>Space</kbd> to reveal</div>
+      </div>
+      <!-- BACK -->
+      <div class="card-face card-back" id="cardBack">
+        <div class="card-status-stripe" id="backStripe"></div>
+        <div class="card-system-tag" id="backTag"></div>
+        <div class="card-answer" id="cardA"></div>
+        <div class="card-hint-box" id="hintBox">
+          <div class="card-hint-label">Memory hint</div>
+          <div id="cardHint"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prevCard()" title="Previous (←)">←</button>
+    <div class="nav-counter" id="navCounter">1 / 1</div>
+    <button class="nav-btn" onclick="nextCard()" title="Next (→)">→</button>
+  </div>
+
+  <!-- CARD ACTIONS (shown after flip) -->
+  <div class="card-actions" id="cardActions">
+    <div class="action-group">
+      <button class="btn btn-know" onclick="markCard('know')" id="btnKnow">
+        <span>✓</span> <span>Got it</span>
+      </button>
+      <button class="btn btn-learn" onclick="markCard('learn')" id="btnLearn">
+        <span>✗</span> <span>Still learning</span>
+      </button>
+    </div>
+    <div class="action-group">
+      <button class="btn btn-icon" onclick="nextCard()" title="Skip">→</button>
+    </div>
+  </div>
+
+  <!-- DECK TOOLS -->
+  <div class="deck-tools">
+    <button class="tool-btn" onclick="shuffleDeck()">⇄ Shuffle deck</button>
+    <button class="tool-btn" onclick="resetOrder()">↺ Reset order</button>
+    <button class="tool-btn" onclick="showKnown()">✓ View known (<span id="knownCount">0</span>)</button>
+    <button class="tool-btn" onclick="showLearn()">✗ View need-work (<span id="learnCount">0</span>)</button>
+    <button class="tool-btn danger" onclick="clearProgress()">⊘ Clear all progress</button>
+  </div>
+
+  <!-- SYSTEM PROGRESS PANEL -->
+  <div class="system-panel">
+    <div class="panel-title">Progress by system</div>
+    <div class="system-grid" id="systemGrid"></div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="emptyState">
+    <div class="empty-emoji">🎉</div>
+    <div class="empty-title">Deck complete!</div>
+    <div class="empty-sub" id="emptyText">You've gone through all the cards in this mode.</div>
+    <button class="btn" onclick="resetOrder()" style="margin:0 auto;">Start over</button>
+  </div>
+
+  <!-- KEYBOARD SHORTCUTS -->
+  <div class="keyboard-row">
+    <div class="kbd-item"><kbd>Space</kbd> flip card</div>
+    <div class="kbd-item"><kbd>→</kbd> next</div>
+    <div class="kbd-item"><kbd>←</kbd> previous</div>
+    <div class="kbd-item"><kbd>K</kbd> mark know it</div>
+    <div class="kbd-item"><kbd>L</kbd> mark still learning</div>
+    <div class="kbd-item"><kbd>S</kbd> shuffle</div>
+  </div>
+</div>
+
+<script>
+// ── CARD DATA ──
+const SYSTEMS_ORDER = ["Respiratory","Urinary","Skeletal","Muscular","Nervous","Endocrine","Senses","Reproductive","STIs","Hint"];
+
+const SYSTEM_COLORS = {
+  Respiratory:{tag:"rgba(55,138,221,0.18)",border:"rgba(55,138,221,0.4)",text:"#7ab8f0",dot:"#378ADD"},
+  Urinary:{tag:"rgba(99,153,34,0.18)",border:"rgba(99,153,34,0.4)",text:"#90c850",dot:"#639922"},
+  Skeletal:{tag:"rgba(186,117,23,0.18)",border:"rgba(186,117,23,0.4)",text:"#e0a040",dot:"#BA7517"},
+  Muscular:{tag:"rgba(216,90,48,0.18)",border:"rgba(216,90,48,0.4)",text:"#e87a50",dot:"#D85A30"},
+  Nervous:{tag:"rgba(127,119,221,0.18)",border:"rgba(127,119,221,0.4)",text:"#a8a0f0",dot:"#7F77DD"},
+  Endocrine:{tag:"rgba(212,83,126,0.18)",border:"rgba(212,83,126,0.4)",text:"#e87aaa",dot:"#D4537E"},
+  Senses:{tag:"rgba(29,158,117,0.18)",border:"rgba(29,158,117,0.4)",text:"#40c896",dot:"#1D9E75"},
+  Reproductive:{tag:"rgba(226,75,74,0.18)",border:"rgba(226,75,74,0.4)",text:"#f07070",dot:"#E24B4A"},
+  STIs:{tag:"rgba(136,135,128,0.18)",border:"rgba(136,135,128,0.4)",text:"#a0a098",dot:"#888780"},
+  Hint:{tag:"rgba(232,213,163,0.12)",border:"rgba(232,213,163,0.3)",text:"#e8d5a3",dot:"#c4a96a"},
+};
+
+const ALL_CARDS = [
+{system:"Respiratory",q:"What is the correct order of the air pathway from nose to lungs?",a:"Nose/Mouth → Pharynx → Larynx → Trachea → Bronchi → Bronchioles → Alveoli.",hint:"🧠 'No Pretty Ladies Take Big Blind Alleys' — Nose, Pharynx, Larynx, Trachea, Bronchi, Bronchioles, Alveoli."},
+{system:"Respiratory",q:"What prevents food from entering the trachea?",a:"The EPIGLOTTIS — a flap of tissue that covers the larynx when you swallow.",hint:"🧠 Epi = 'upon' the glottis. It flops DOWN like a lid when you swallow. No lid = food in lungs."},
+{system:"Respiratory",q:"What are the C-shaped rings in the trachea made of?",a:"CARTILAGE — keeps the trachea from collapsing so airflow is never cut off.",hint:"🧠 C-shaped rings = C for Cartilage. They hold the tube open like a garden hose with ribs."},
+{system:"Respiratory",q:"Where does actual gas exchange occur?",a:"In the ALVEOLI — tiny air sacs surrounded by capillaries. O2 diffuses in, CO2 diffuses out.",hint:"🧠 Alveoli = the 'air pockets.' Think of tiny balloons hugged by blood vessels — that's where the swap happens."},
+{system:"Respiratory",q:"What is surfactant and why does it matter?",a:"A lipoprotein film lining alveoli that prevents them from collapsing. Premature babies lack it → Respiratory Distress Syndrome.",hint:"🧠 Surfactant = surface-active agent. It keeps wet lung walls from sticking shut like a wet plastic bag."},
+{system:"Respiratory",q:"What is the role of the larynx?",a:"Houses the VOCAL CORDS. Air through the glottis causes vibration = sound. Tension = higher pitch; wider glottis = lower pitch.",hint:"🧠 Larynx = voice box. Tighter strings = higher notes — same as a guitar."},
+{system:"Respiratory",q:"How many lobes does each lung have?",a:"Right lung = 3 lobes. Left lung = 2 lobes (heart takes up space on the left).",hint:"🧠 Right = 3, Left = 2. Heart is on the LEFT, so the left lung gives it room. Right has no such neighbor."},
+{system:"Respiratory",q:"What muscle is primarily responsible for breathing?",a:"The DIAPHRAGM — a dome-shaped sheet of striated muscle at the bottom of the thoracic cavity.",hint:"🧠 Diaphragm = the floor of your chest. When it drops, air drops in. Easy to remember: it's the only muscle you can feel when you hiccup."},
+{system:"Respiratory",q:"What happens during INSPIRATION (inhaling)?",a:"ACTIVE: Diaphragm FLATTENS; rib cage moves up and OUT; thoracic volume INCREASES; pressure DECREASES; air flows IN.",hint:"🧠 Volume UP → pressure DOWN → air rushes in (Boyle's Law). Like a syringe: pull the plunger out, liquid flows in."},
+{system:"Respiratory",q:"What happens during EXPIRATION (exhaling)?",a:"PASSIVE: Diaphragm and rib muscles RELAX; thoracic cavity SHRINKS; pressure INCREASES; air flows OUT.",hint:"🧠 Exhaling is mostly passive — you don't push air out, you just stop pulling it in. The lungs recoil like a stretched rubber band."},
+{system:"Respiratory",q:"What actually triggers the urge to breathe?",a:"Rising CO2 (and H+) levels in the blood — NOT low oxygen. Medulla oblongata and artery receptors detect this.",hint:"🧠 Exam trap: everyone says oxygen, answer is CO2. Think: CO2 is the 'trash' that piles up — your brain panics when trash builds, not when oxygen dips slightly."},
+{system:"Respiratory",q:"What is hyperventilation?",a:"Breathing too fast → DECREASES CO2 levels → blood vessels constrict → dizziness.",hint:"🧠 More breaths = less CO2. Less CO2 = blood vessels clamp down. That's why paper-bag breathing helps — it lets CO2 rebuild."},
+{system:"Respiratory",q:"What is tidal volume vs. vital capacity?",a:"Tidal volume = air per normal breath. Vital capacity = maximum air in one breath (~4800 mL).",hint:"🧠 Tidal = tide — the regular in-and-out. Vital capacity = maximum effort breath. One is your everyday wave, the other is a full tsunami."},
+{system:"Respiratory",q:"What is residual volume?",a:"Air REMAINING in lungs after full exhalation (~1 liter). Cannot be exhaled; not available for gas exchange.",hint:"🧠 Residual = leftover. Your lungs never fully empty — like a juice box you can't finish no matter how hard you squeeze."},
+{system:"Respiratory",q:"What is external vs. internal respiration?",a:"External = gas exchange in LUNGS (O2 in, CO2 out of blood). Internal = gas exchange in TISSUES (O2 into cells, CO2 into blood).",hint:"🧠 External = outside the body's cells (at the lungs). Internal = inside the body's tissues. Think of external as the loading dock and internal as the delivery."},
+{system:"Respiratory",q:"How does CO2 travel in the blood?",a:"Most converts to bicarbonate (HCO3-). CO2 + H2O → H2CO3 → H+ + HCO3-. Hemoglobin also buffers H+ ions.",hint:"🧠 CO2 doesn't just float free — it disguises itself as bicarbonate for the ride. Only ~7% travels dissolved; the rest converts."},
+{system:"Respiratory",q:"What causes asthma and how is it treated?",a:"Allergic reaction → mucus buildup + bronchiole constriction → wheezing, breathlessness. Treated with epinephrine/anti-inflammatories.",hint:"🧠 Asthma = airways squeezed and gunked up. Epinephrine works because it's a bronchodilator — it forces airways to open (same as adrenaline does in fight-or-flight)."},
+{system:"Respiratory",q:"How does tuberculosis (TB) damage the lungs?",a:"Bacterial infection by tubercle bacillus causes alveoli to burst and be replaced by connective tissue, forming a 'tubercle' capsule.",hint:"🧠 Tubercle = little lump. The body walls off the bacteria with scar tissue — but the sealed-off areas can't do gas exchange anymore."},
+{system:"Respiratory",q:"How does lung cancer develop from smoking?",a:"Cells lining bronchi thicken → cilia disappear → tar settles → cells transform → tumors form → metastasis.",hint:"🧠 Think of it as a slow takeover: tar kills the sweepers (cilia), then builds up, then corrupts the cells. One domino at a time."},
+{system:"Urinary",q:"What are the 4 organs of the urinary system?",a:"Kidneys (2): filter blood. Ureters (2): transport urine. Bladder (1): stores urine. Urethra (1): exits body.",hint:"🧠 'K-U-B-U' — Kidneys, Ureters, Bladder, Urethra. Top to bottom, it's just the path urine takes downhill."},
+{system:"Urinary",q:"What are the 4 functions of the urinary system?",a:"1. Excretion of waste. 2. Water-salt balance. 3. Acid-base balance (pH ~7.4). 4. Hormone secretion (renin, erythropoietin).",hint:"🧠 'EWAH' — Excretion, Water-salt, Acid-base, Hormones. Or think: kidneys do MORE than just make pee — they're also tiny hormone factories."},
+{system:"Urinary",q:"What is the functional unit of the kidney?",a:"The NEPHRON — each kidney has >1 million. It filters blood and forms urine through 3 processes.",hint:"🧠 Nephron = the kidney's microscopic worker. 'Neo' sounds like 'nephron' and means new — the nephron constantly makes new urine."},
+{system:"Urinary",q:"What are the 5 key structures of the nephron?",a:"Glomerulus (filtration) → PCT (reabsorbs Na+/glucose/amino acids) → Loop of Henle (concentration gradient) → DCT (secretion/aldosterone) → Collecting duct (ADH/water).",hint:"🧠 'Good Players Love Dirty Courts' — Glomerulus, PCT, Loop, DCT, Collecting duct. In order!"},
+{system:"Urinary",q:"What are the 3 processes of urine formation in order?",a:"1. FILTRATION at glomerulus. 2. REABSORPTION at tubules (~99% of filtrate). 3. SECRETION adds extra waste back in.",hint:"🧠 'Filter, Reclaim, Dump' — or think of it like a coffee maker: drip everything through (filtration), keep the good parts (reabsorption), toss extra grounds in (secretion)."},
+{system:"Urinary",q:"What does ADH do, and what inhibits it?",a:"ADH increases collecting duct water permeability → more water reabsorbed → concentrated urine. Alcohol INHIBITS ADH → dilute urine → dehydration.",hint:"🧠 Anti-Diuretic = ANTI urination. Alcohol blocks it = MORE urination. Classic: drink beer, pee a lot — that's blocked ADH."},
+{system:"Urinary",q:"What does aldosterone do?",a:"From adrenal cortex. Acts on DCT → reabsorbs Na+ (water follows) → excretes K+ → raises blood pressure.",hint:"🧠 Aldosterone = 'All-do-sterone' keeps sodium. Na in, K out. Water follows sodium like a puppy — so blood pressure goes up."},
+{system:"Urinary",q:"What is ANH and what does it do?",a:"Atrial Natriuretic Hormone — secreted by the HEART when blood volume is too high. Inhibits aldosterone → Na+ excreted → BP drops.",hint:"🧠 ANH = heart's 'slow down' signal. When your blood pressure is too high, the heart itself releases ANH to lower it. The heart is self-regulating."},
+{system:"Urinary",q:"Why does caffeine increase urination?",a:"Caffeine BLOCKS ADH at the tubules → collecting duct stays impermeable → large volume of dilute urine.",hint:"🧠 Same mechanism as alcohol — both block ADH. Caffeine = diuretic. Less water reabsorbed = more in the toilet."},
+{system:"Urinary",q:"What are the 3 regions of the kidney?",a:"Renal CORTEX (outer granulated layer) → Renal MEDULLA (pyramids) → Renal PELVIS (central cavity to ureter).",hint:"🧠 Outside-in: Cortex → Medulla → Pelvis. Same logic as the brain: cortex is always the outer layer."},
+{system:"Urinary",q:"What is urea and how is it made?",a:"Waste from amino acid breakdown. Liver combines toxic ammonia + CO2 → urea (less toxic). Primary nitrogenous waste in urine.",hint:"🧠 Protein → amino acids → ammonia (toxic) → liver converts to urea (safer). Urea = detoxed ammonia, shipped out in pee."},
+{system:"Urinary",q:"What is uremia?",a:"High urea/waste in blood due to kidney failure. Causes cardiac arrhythmia, vomiting, respiratory problems, possibly death.",hint:"🧠 Uremia = urine IN the blood (where it shouldn't be). When kidneys fail, the trash backs up into the bloodstream."},
+{system:"Urinary",q:"What is gout?",a:"Uric acid crystals collect in JOINTS → painful inflammation.",hint:"🧠 Gout = the 'rich person's disease' historically. Uric acid from purine-rich food (meat, alcohol) crystallizes in joints — like glass shards in your big toe."},
+{system:"Urinary",q:"What is hemodialysis vs. CAPD?",a:"Hemodialysis = machine filters blood externally. CAPD = peritoneal membrane inside body filters blood; patient can move around.",hint:"🧠 Hemo = blood (goes outside to machine). CAPD = Continuous, Ambulatory (you can walk around) — uses your own abdominal lining as the filter."},
+{system:"Skeletal",q:"What are the 6 functions of the skeletal system?",a:"1. Support. 2. Protect organs. 3. Produce blood cells. 4. Store minerals. 5. Allow movement. 6. Detoxification.",hint:"🧠 'SPPMAD' — Support, Protect, Produce, Minerals, Allow movement, Detox. Or remember: bones do way more than hold you up."},
+{system:"Skeletal",q:"What is the difference between osteoblasts, osteocytes, and osteoclasts?",a:"Osteoblasts = BUILD bone. Osteocytes = MATURE bone cells. Osteoclasts = CRUSH/resorb bone.",hint:"🧠 BLAST = BUILD. CLAST = CRUSH. CYTE = comfy (mature, just living in their lacuna). Same suffix rules as immunology."},
+{system:"Skeletal",q:"What is the diaphysis vs. epiphysis?",a:"Diaphysis = SHAFT (compact bone, yellow marrow). Epiphysis = ENDS (spongy bone, red marrow).",hint:"🧠 Dia = 'through' the middle (the shaft going through). Epi = 'upon' the ends (like epicenter = on top of center)."},
+{system:"Skeletal",q:"What is the periosteum?",a:"Fibrous connective tissue COVERING the outside of bone. Contains blood vessels and nerves; essential for repair and growth.",hint:"🧠 Peri = around. Periosteum = the bone's outer 'skin.' Like the peel on a fruit — protective layer surrounding the solid inside."},
+{system:"Skeletal",q:"What is the epiphyseal (growth) plate?",a:"Cartilage that allows bones to LENGTHEN during growth. Gets progressively replaced by bone. Closes at end of adolescence.",hint:"🧠 Growth plate = the bone's 'expansion zone.' When it closes (ossifies), you stop growing taller. Closing = adulthood."},
+{system:"Skeletal",q:"Where are red vs. yellow bone marrow found?",a:"Red marrow: spongy bone and flat bones → makes blood cells. Yellow marrow: medullary cavity of the diaphysis → stores fat.",hint:"🧠 Red = blood (same color). Yellow = fat (like yellow butter). Red in the spongy ends, yellow in the hollow shaft."},
+{system:"Skeletal",q:"What are the axial vs. appendicular skeleton?",a:"Axial = skull + ribs + sternum + vertebral column (~80 bones). Appendicular = girdles + all limbs.",hint:"🧠 Axial = axis/core — the central pole of your body. Appendicular = appendages (everything that hangs off the axis)."},
+{system:"Skeletal",q:"What are true, false, and floating ribs?",a:"True (1–7): attach directly to sternum. False (8–10): attach via rib 7's cartilage. Floating (11–12): don't attach at all.",hint:"🧠 True = direct attachment. False = indirect (via cartilage bridge). Floating = free-floating, no attachment. Think of trust levels: true, sort-of, none."},
+{system:"Skeletal",q:"How many vertebrae in each spinal region?",a:"Cervical 7, Thoracic 12, Lumbar 5, Sacrum 5 fused, Coccyx 4 fused. Total: 33.",hint:"🧠 7-12-5 = breakfast-lunch-dinner (7 AM, 12 noon, 5 PM). Or: 'C7, T12, L5' — doctors say it constantly."},
+{system:"Skeletal",q:"How is blood calcium regulated by PTH and calcitonin?",a:"PTH (parathyroid) → activates osteoclasts → RAISES blood Ca2+. Calcitonin (thyroid) → promotes bone deposition → LOWERS blood Ca2+.",hint:"🧠 PTH = Pulls calcium out of bone (raises blood level). CalciTONIN = TONES DOWN blood calcium. Opposite effects, opposite glands."},
+{system:"Skeletal",q:"What are the 4 stages of fracture repair?",a:"1. Hematoma (6–8 hrs). 2. Fibrocartilaginous callus (~3 weeks). 3. Bony callus (3–4 months). 4. Remodeling.",hint:"🧠 'Hema-Fibro-Bony-Remodel' = like fixing a road: first the site bleeds, then scaffolding goes up, then concrete pours, then it gets smoothed."},
+{system:"Skeletal",q:"What are fibrous, cartilaginous, and synovial joints?",a:"Fibrous = immovable (skull sutures). Cartilaginous = slightly movable (spinal discs). Synovial = freely movable (hip, knee).",hint:"🧠 More tissue between bones = more movement. Fibrous (tight) = none. Cartilage (springy) = a little. Synovial (fluid-filled) = full range."},
+{system:"Skeletal",q:"Ligament vs. tendon — what's the difference?",a:"LIGAMENT = bone to bone. TENDON = muscle to bone.",hint:"🧠 LigAment = boneA to boneA (two bones). Tendon connects to what you're 'tending' to move (muscle). Or: LigAment-LAst letter A = bone-to-bone (both start with bone)."},
+{system:"Skeletal",q:"What is osteoporosis?",a:"Progressive loss of bone calcium. Common in post-menopausal women (estrogen drop). Bones become brittle.",hint:"🧠 Osteo = bone. Porosis = porous (full of holes). Picture honeycomb bone — looks like Swiss cheese and snaps just as easily."},
+{system:"Skeletal",q:"Osteoarthritis vs. rheumatoid arthritis?",a:"Osteoarthritis = wear-and-tear cartilage loss. Rheumatoid = AUTOIMMUNE attack on synovial membrane → destroys underlying bone.",hint:"🧠 Osteo = mechanical breakdown (like worn brake pads). Rheumatoid = immune system misfires and attacks itself (the enemy is inside)."},
+{system:"Muscular",q:"What are the 3 types of muscle tissue?",a:"Skeletal = voluntary, striated, bones. Cardiac = involuntary, striated, heart only. Smooth = involuntary, non-striated, hollow organs.",hint:"🧠 Only ONE is striated AND involuntary = CARDIAC. That's the exam trap. Skeletal: you control. Smooth: you don't. Cardiac: you definitely don't (thankfully)."},
+{system:"Muscular",q:"List the 7 steps of the sliding filament model.",a:"1. Nerve impulse arrives. 2. ACh released, binds sarcolemma. 3. Ca2+ released from SR. 4. Ca2+ binds troponin → exposes myosin sites. 5. Myosin forms cross-bridges. 6. ATP pulls actin → sarcomere shortens. 7. Ca2+ reabsorbed → relaxation.",hint:"🧠 'Nerve-ACh-Calcium-Troponin-Bridge-ATP-Relax.' Calcium is the key trigger — nothing happens until Ca2+ shows up. Think: calcium = the ignition key."},
+{system:"Muscular",q:"What is the sarcomere?",a:"The FUNCTIONAL contractile unit of skeletal muscle. Made of repeating actin (thin) and myosin (thick) filaments.",hint:"🧠 Sarcomere = sarcous (muscle) + mere (unit). It's the smallest repeating 'muscle' chunk. Hundreds of sarcomeres in series = one muscle fiber."},
+{system:"Muscular",q:"Which filament uses ATP — myosin or actin?",a:"MYOSIN uses ATP — both to attach to actin AND to detach. No ATP = rigor mortis (permanently locked).",hint:"🧠 Myosin = Motor. Motors run on fuel. No fuel after death = motor stays locked = rigor mortis. Actin is just the track."},
+{system:"Muscular",q:"What does the sarcoplasmic reticulum store?",a:"CALCIUM (Ca2+). Releases it to trigger contraction; reabsorbs it to allow relaxation.",hint:"🧠 SR = the muscle's calcium vault. When the alarm (nerve impulse) goes off, the vault opens. When the alarm stops, calcium goes back in and muscle relaxes."},
+{system:"Muscular",q:"What is a motor unit?",a:"One motor neuron + all the muscle fibers it controls. All fire together (all-or-nothing). Fine control = few fibers. Strength = many fibers.",hint:"🧠 Think of it like a light switch controlling multiple bulbs. Small motor unit = dim control. Large unit = floodlights. Your eye muscles have tiny units; your thigh muscles have huge ones."},
+{system:"Muscular",q:"What are the 3 ATP energy sources for muscle, fastest to slowest?",a:"1. Creatine phosphate (seconds). 2. Fermentation/anaerobic (2–3 mins, lactic acid). 3. Cellular respiration/aerobic (long-term).",hint:"🧠 Fastest = creatine (sprint). Medium = fermentation (burning feeling). Slowest = aerobic (marathon). Short burst → medium burn → long haul."},
+{system:"Muscular",q:"What is physiological tetanus?",a:"Maximal SUSTAINED contraction from fused twitches. Different from tetanus the disease (lockjaw).",hint:"🧠 Tetanus = stimuli stacked so fast the muscle never relaxes. Like holding down a key on a piano — the note keeps ringing. Not to be confused with the bacterial infection."},
+{system:"Muscular",q:"What is summation?",a:"Increasing contraction strength by recruiting MORE motor units.",hint:"🧠 Summation = adding up units. Like calling in backup — the more motor units you recruit, the harder the contraction."},
+{system:"Muscular",q:"What is muscle tone?",a:"Continuous PARTIAL contraction of some fibers at rest — keeps muscles firm, maintains posture, generates heat.",hint:"🧠 Muscle tone = not all fibers contracting, just some on rotation — like a security team taking shifts. Without it, you'd collapse into a puddle."},
+{system:"Muscular",q:"Fast-twitch vs. slow-twitch muscle fibers?",a:"Fast-twitch = anaerobic, fatigue quickly, strength/sprinting. Slow-twitch = aerobic, high endurance, more mitochondria.",hint:"🧠 Fast = flashy but fades (sprinters). Slow = steady and strong (marathoners). Slow fibers are red (more myoglobin/blood). Fast are pale (less)."},
+{system:"Muscular",q:"What causes Duchenne muscular dystrophy?",a:"Genetic lack of DYSTROPHIN → calcium leaks into cells → enzymes dissolve muscle fibers. Sex-linked; progressive.",hint:"🧠 Dystrophin = the structural 'glue' holding muscle membranes together. No glue → walls leak → enzymes flood in → fibers dissolve. It's a structural failure."},
+{system:"Muscular",q:"What is myasthenia gravis?",a:"Autoimmune: antibodies destroy ACh receptors at neuromuscular junctions → progressive muscle weakness.",hint:"🧠 Myasthenia = muscle weakness. Gravis = severe. The immune system destroys the 'mailboxes' (receptors) so ACh messages never get received."},
+{system:"Nervous",q:"What is the CNS vs. PNS?",a:"CNS = Brain + Spinal Cord (protected by skull, vertebrae, meninges, CSF). PNS = all nerves/ganglia outside CNS.",hint:"🧠 CNS = the command center (locked in bone for protection). PNS = the messenger network (everything outside). Like HQ vs. field agents."},
+{system:"Nervous",q:"Sympathetic vs. parasympathetic nervous system?",a:"Sympathetic = Fight or Flight (heart/breathing speeds up, pupils dilate). Parasympathetic = Rest and Digest (slows heart, promotes digestion).",hint:"🧠 Sympathetic = Stress (same S). Parasympathetic = Peace (same P). Or: Para = after the storm — calm down, eat, rest."},
+{system:"Nervous",q:"What are dendrites vs. axons?",a:"Dendrites = multiple short extensions that RECEIVE signals toward cell body. Axon = single long extension that sends signals AWAY.",hint:"🧠 Dendrites = 'receive' (both start with D→R). Axons = 'away' (both start with A). Or: dendrites = antennae in, axons = antenna out."},
+{system:"Nervous",q:"What are sensory, interneurons, and motor neurons?",a:"Sensory = receptors → CNS (input). Interneurons = within CNS (processing). Motor = CNS → muscles/glands (output).",hint:"🧠 SIM = Sensory, Inter, Motor. Or think of a computer: sensory = keyboard input, inter = processor, motor = screen output."},
+{system:"Nervous",q:"What is the myelin sheath?",a:"Lipid coating on axons. Insulates them, speeds impulse conduction, aids PNS regeneration. Made by Schwann cells (PNS) or oligodendrocytes (CNS).",hint:"🧠 Myelin = the wire's insulation. Without it, signals short-circuit or slow down (like MS — multiple sclerosis destroys myelin)."},
+{system:"Nervous",q:"What is saltatory conduction?",a:"Impulse JUMPS node to node (gaps in myelin = nodes of Ranvier) instead of traveling the whole axon. Much faster.",hint:"🧠 Saltatory = 'to leap' (Latin: saltare). Signal skips like a stone on water — each skip covers more ground faster than crawling along the whole axon."},
+{system:"Nervous",q:"Describe resting potential and action potential.",a:"Resting = -65mV (more Na+ outside, K+ inside). Action potential: Na+ rushes IN → depolarization → K+ rushes OUT → repolarization.",hint:"🧠 'NAP': Na IN to activate (depolarize), K OUT to reset (repolarize). Think of a wave — rises (Na in) then falls (K out)."},
+{system:"Nervous",q:"How does a synapse work?",a:"Impulse → Ca2+ enters → vesicles release neurotransmitters → diffuse across cleft → bind receptors → excitation or inhibition.",hint:"🧠 Think of a postal system: the impulse is the truck arriving (Ca2+ opens dock), packages (neurotransmitters) get thrown across the gap, and delivered to the next neuron's mailbox (receptor)."},
+{system:"Nervous",q:"What are the key neurotransmitters and their roles?",a:"ACh = memory/muscle. Dopamine = mood/movement. Serotonin = sleep/mood. GABA = inhibitory. Norepinephrine = waking/stress. Endorphins = pain relief.",hint:"🧠 'A Dog Sleeps, GABA Naps Every night' — ACh, Dopamine, Serotonin, GABA, Norepinephrine, Endorphins. Each disease tells you what it does: no dopamine = Parkinson's."},
+{system:"Nervous",q:"What are the 4 lobes of the cerebrum and their functions?",a:"Frontal = motor/thought. Temporal = hearing/smell/speech comprehension (Wernicke's). Parietal = touch/taste. Occipital = vision.",hint:"🧠 Location = function: Frontal (forehead) = thinking & moving. Temporal (temples) = hearing. Parietal (top/back) = feeling. Occipital (back of skull) = seeing."},
+{system:"Nervous",q:"What does the cerebellum do?",a:"BALANCE + coordination + muscle tone + motor learning. Damage = loss of coordination. NOT consciousness.",hint:"🧠 Cerebellum = 'little brain.' Think: balance beam. If you're wobbly, blame the cerebellum. Cerebrum handles thinking; cerebellum handles coordination."},
+{system:"Nervous",q:"What does the medulla oblongata do?",a:"Vital reflex centers: BREATHING, HEARTBEAT, BLOOD PRESSURE. Also linked to SIDS.",hint:"🧠 Medulla = life support. If it shuts off, you stop breathing and your heart stops. It's the absolute baseline that keeps you alive automatically."},
+{system:"Nervous",q:"Hypothalamus vs. thalamus?",a:"Hypothalamus = homeostasis control (hunger, thirst, temperature, controls pituitary). Thalamus = relay station for all senses except smell.",hint:"🧠 Hypo = under. Hypothalamus controls the 'basics of life.' Thalamus = the brain's switchboard operator (routes all incoming sense signals)."},
+{system:"Nervous",q:"Wernicke's vs. Broca's area?",a:"Wernicke's (temporal lobe) = COMPREHENSION of speech. Broca's (frontal lobe) = MOTOR production of speech.",hint:"🧠 Wernicke = Understanding/Receiving (W = words received). Broca = Broadcasting speech. Damage to Wernicke = can't understand. Damage to Broca = can't speak."},
+{system:"Nervous",q:"What is the reflex arc pathway?",a:"RECEPTOR → sensory neuron → spinal cord (interneuron) → motor neuron → EFFECTOR. No brain required.",hint:"🧠 Reflexes bypass the brain for speed. Knee jerk = signal loops in the spinal cord. Brain hears about it AFTER it already happened."},
+{system:"Nervous",q:"What is Alzheimer's disease?",a:"Memory loss, disorientation. Brain shows beta-amyloid plaques and neurofibrillary tangles. Hippocampus/cerebral cortex atrophy.",hint:"🧠 Beta-amyloid = protein clumps clogging brain. Tangles = internal neuron collapse. Hippocampus (memory) is hit first — recent memories go before old ones."},
+{system:"Nervous",q:"What causes Parkinson's disease?",a:"Degeneration of DOPAMINE-releasing neurons → loss of motor control, shuffling gait, tremors. Ages 50–60.",hint:"🧠 No dopamine = no smooth movement. Think of dopamine as the brain's motor oil — without it, the engine seizes up. Tremors + shuffle = Parkinson's signature."},
+{system:"Endocrine",q:"Endocrine vs. exocrine glands?",a:"Endocrine = secretes hormones into BLOODSTREAM (no ducts). Exocrine = secretes into DUCTS (e.g., sweat, saliva).",hint:"🧠 Endo = inside (into blood). Exo = outside (out through a duct). Like endo = internal delivery, exo = external delivery."},
+{system:"Endocrine",q:"Peptide vs. steroid hormones?",a:"Peptide = can't enter cells; binds membrane receptor → cAMP cascade. Steroid = lipid-based; enters cell → changes gene expression.",hint:"🧠 Peptides are too big/polar to cross membranes — they knock on the door. Steroids are lipid = slip through the fatty membrane directly into the nucleus."},
+{system:"Endocrine",q:"What does the anterior pituitary produce?",a:"TSH, ACTH, FSH, LH, Prolactin, MSH, Growth Hormone. It's the 'master gland.'",hint:"🧠 'The Anterior gland Makes Prolific, Stimulating, Gonadal outputs' = TSH, ACTH, MSH, Prolactin, FSH/LH, GH. Each hormone bosses around another gland."},
+{system:"Endocrine",q:"What does the posterior pituitary store/release?",a:"STORES ADH (water balance) and OXYTOCIN (contractions/milk). Both made by hypothalamus, stored here.",hint:"🧠 Posterior pituitary is just a storage unit for the hypothalamus's hormones. It makes nothing itself — it's the warehouse, hypothalamus is the factory."},
+{system:"Endocrine",q:"What are the GH abnormalities?",a:"Too little in childhood = pituitary dwarfism. Too much in childhood = giantism. Too much as adult = acromegaly (enlarged extremities).",hint:"🧠 GH in childhood = height. Too little = stays small. Too much = giant. In adults, bones can't lengthen so they THICKEN instead — face, hands, feet get bigger (acromegaly)."},
+{system:"Endocrine",q:"What does the thyroid produce and what does it need?",a:"Needs IODINE. Produces: Thyroid Hormone (TH) = regulates metabolism. Calcitonin = lowers blood calcium.",hint:"🧠 No iodine = no TH = thyroid enlarges trying to compensate = GOITER. TH is your metabolic gas pedal — low TH = sluggish, high TH = revved up."},
+{system:"Endocrine",q:"What are the thyroid disorders?",a:"Goiter = enlarged thyroid from iodine deficiency. Hypothyroidism = low TH → lethargy, weight gain. Hyperthyroidism/Graves' = overactive, eye protrusion.",hint:"🧠 Hypo = too little (slows you down). Hyper = too much (revs you up — eye protrusion, insomnia, weight loss). Graves' = the extreme hyper version."},
+{system:"Endocrine",q:"What do the parathyroid glands do?",a:"Produce PTH → RAISES blood calcium by activating osteoclasts and promoting kidney Ca2+ reabsorption.",hint:"🧠 PTH = Parathyroid pulls calcium from bone into blood. Opposite of calcitonin. When blood Ca is low, PTH kicks in and mines the bones for it."},
+{system:"Endocrine",q:"Adrenal medulla vs. adrenal cortex?",a:"Medulla (inner) = epinephrine/norepinephrine → short-term fight-or-flight. Cortex (outer) = aldosterone + cortisol → long-term stress.",hint:"🧠 Medulla = inner = immediate (adrenaline rush). Cortex = outer = chronic (cortisol keeps stress response going for days). Medulla is controlled by nerves; cortex by hormones."},
+{system:"Endocrine",q:"Addison's disease vs. Cushing's syndrome?",a:"Addison's = too LITTLE glucocorticoids → skin bronzing, fatigue. Cushing's = too MUCH glucocorticoids → trunk weight gain but thin limbs.",hint:"🧠 Addison = ADD cortisol (patient needs more). Cushing = CRUSH with cortisol (too much). Cushing's 'moon face' and belly fat is the classic visual."},
+{system:"Endocrine",q:"What do insulin and glucagon do?",a:"Insulin (B cells) = LOWERS blood glucose (released when glucose HIGH). Glucagon (A cells) = RAISES blood glucose (released when glucose LOW).",hint:"🧠 Insulin = INTO cells (drives glucose in). Glucagon = GOES UP (raises glucose). They're antagonists — when one is high, the other is low."},
+{system:"Endocrine",q:"Type 1 vs. Type 2 diabetes?",a:"Type 1 = autoimmune, no insulin made, needs injections. Type 2 = insulin resistance, adult-onset, manage with diet/exercise.",hint:"🧠 Type 1 = body destroys its OWN insulin factories. Type 2 = factories work but the door locks (cells ignore insulin). One is destroyed; one is ignored."},
+{system:"Endocrine",q:"What does the pineal gland do?",a:"Secretes MELATONIN → regulates sleep/wake cycle (circadian rhythm).",hint:"🧠 Pineal = pine cone-shaped gland. Melatonin = 'midnight molecule.' More darkness = more melatonin = sleepier. Jet lag = your pineal gland is confused."},
+{system:"Endocrine",q:"What is the thymus gland?",a:"Below sternum. T lymphocytes MATURE here. Largest in childhood. Produces thymosins.",hint:"🧠 Thymus = T-cell training camp. T cells are born in bone marrow, graduate in the Thymus (T for Thymus). Shrinks as you age because your T-cell army is already built."},
+{system:"Senses",q:"What are the 5 types of sensory receptors?",a:"Chemoreceptors (chemicals). Photoreceptors (light). Mechanoreceptors (pressure). Thermoreceptors (temperature). Pain receptors (don't adapt).",hint:"🧠 'CPMTP' — Chemo, Photo, Mechano, Thermo, Pain. Only pain receptors don't adapt — evolution made sure you can't 'get used to' being damaged."},
+{system:"Senses",q:"What is sensory adaptation?",a:"Decrease in receptor response with repeated stimulation (e.g., stop noticing a smell). Pain receptors do NOT adapt.",hint:"🧠 You stop noticing your shirt after a minute — that's sensory adaptation. Pain never adapts because it's a warning system you can't turn off."},
+{system:"Senses",q:"Rods vs. cones?",a:"Rods = night/peripheral vision, contain rhodopsin, not color-sensitive. Cones = color + detail, concentrated in fovea centralis.",hint:"🧠 ROds = night vision (like a rod in the dark). COnes = Color. Fovea = the bull's-eye of sharp color vision. Rods are everywhere; cones cluster in the center."},
+{system:"Senses",q:"What does the cornea do?",a:"Transparent front of the sclera. Does MOST light refraction — more bending than the lens.",hint:"🧠 Cornea = the eye's main focusing lens (does 2/3 of the bending). The lens only fine-tunes. That's why corneal problems cause major vision issues."},
+{system:"Senses",q:"What does the iris do?",a:"Colored smooth muscle. REGULATES pupil size to control light entry. Controlled by the autonomic nervous system.",hint:"🧠 Iris = the eye's aperture. Bright light = iris constricts (smaller pupil). Dim light = iris dilates (bigger pupil). It's automatic — you can't control it."},
+{system:"Senses",q:"What is the fovea centralis?",a:"Area of HIGHEST visual acuity — densely packed with cones. Where you focus when looking directly at something.",hint:"🧠 Fovea = the dead center of your retina. When you look directly at something, you're landing its image on the fovea. That's your sharpest, most detailed spot."},
+{system:"Senses",q:"What is the blind spot?",a:"Where the OPTIC NERVE exits the retina — no rods or cones here, so no vision.",hint:"🧠 The optic nerve 'cable' has to exit somewhere — that exit point has no photoreceptors. Close one eye and stare at a dot — a nearby object will vanish."},
+{system:"Senses",q:"Myopia, hyperopia, and astigmatism?",a:"Myopia (nearsighted) = eyeball too long → concave lens. Hyperopia (farsighted) = eyeball too short → convex lens. Astigmatism = irregular cornea.",hint:"🧠 MYopia = MY close things are clear (near fine, far blurry). HYperopia = HY far things are clear. Concave caves inward and diverges light to fix the long eyeball."},
+{system:"Senses",q:"Cochlea vs. semicircular canals?",a:"Cochlea = HEARING (converts vibrations to nerve impulses). Semicircular canals = BALANCE and rotational detection.",hint:"🧠 COchlea = sounds like 'concert' (hearing). SEMIcircular = balance (the loops detect which way you're spinning). Spin a top — semi tracks the spin; cochlea hears the noise."},
+{system:"Senses",q:"What are the ossicles?",a:"3 tiny middle ear bones: malleus (hammer), incus (anvil), stapes (stirrup). AMPLIFY vibrations from eardrum to cochlea.",hint:"🧠 MIS = Malleus, Incus, Stapes. Or the shapes: hammer hits anvil, which nudges the stirrup — like a tiny blacksmith's shop. Each bone amplifies the vibration further."},
+{system:"Senses",q:"What is the organ of Corti?",a:"Receptor organ INSIDE the cochlea. Hair cells convert vibrations to nerve impulses.",hint:"🧠 Corti = the cochlea's inner microphone. Hair cells bend when fluid moves → that bending = electrical signal = you 'hear.' Loud noise destroys hair cells permanently."},
+{system:"Senses",q:"What percentage of 'taste' is actually smell?",a:"80–90% of perceived taste is actually SMELL. Olfactory receptors detect vaporized chemicals.",hint:"🧠 Hold your nose and eat something — food barely has flavor. That's proof: most 'taste' is your nose doing the work. Smell and taste are deeply fused."},
+{system:"Reproductive",q:"What is the pathway of sperm from production to ejaculation?",a:"Seminiferous tubules → Epididymis (maturation) → Vas deferens → Urethra → out.",hint:"🧠 'SEVU' — Seminiferous, Epididymis, Vas deferens, Urethra. Or: 'Sperm Exits Via Urethra' — describes the path AND the outcome."},
+{system:"Reproductive",q:"What do the seminal vesicles, prostate, and bulbourethral glands produce?",a:"Seminal vesicles = fructose (energy). Prostate = alkaline fluid (buffers acid vagina). Bulbourethral = mucus (lubrication).",hint:"🧠 Each gland adds to semen for a specific purpose: fuel, pH fix, lube. Think of it as the sperm's supply convoy before the journey."},
+{system:"Reproductive",q:"What are the 3 parts of a sperm cell?",a:"Head = acrosome enzymes + DNA. Middle piece = mitochondria (ATP). Tail = propulsion.",hint:"🧠 Head = mission (DNA + key to egg). Mid = engine (mitochondria = fuel). Tail = drive (movement). Sperm = tiny torpedo with a payload."},
+{system:"Reproductive",q:"What is the ovarian cycle (28 days)?",a:"Days 1–13: FSH → follicle grows → estrogen rises. Day 14: ovulation. Days 15–28: LH → corpus luteum → progesterone. Day 28: menstruation if no fertilization.",hint:"🧠 Two halves split at day 14 (ovulation). First half = growing the egg (FSH/estrogen). Second half = preparing for pregnancy (LH/progesterone). No pregnancy = reset."},
+{system:"Reproductive",q:"What is the uterine cycle?",a:"Days 1–5: menstruation (shed). Days 6–13: estrogen → endometrium thickens. Day 14: ovulation. Days 15–28: progesterone → secretory phase.",hint:"🧠 The uterine cycle mirrors the ovarian cycle. Estrogen builds the lining (first half). Progesterone maintains it (second half). No pregnancy = lining sheds = start over."},
+{system:"Reproductive",q:"Where does fertilization occur?",a:"In the FALLOPIAN TUBE (oviduct) — NOT the uterus. Egg is viable 3–4 days post-ovulation.",hint:"🧠 Egg is released from ovary → swept into fallopian tube → fertilized there. If fertilized, it travels DOWN to implant in the uterus. Fertilization in uterus = wrong answer."},
+{system:"Reproductive",q:"What is HCG and what does a pregnancy test detect?",a:"Human Chorionic Gonadotropin — keeps corpus luteum alive → progesterone up → uterine lining maintained. Pregnancy tests detect HCG.",hint:"🧠 HCG = the embryo's SOS signal. 'Keep the corpus luteum alive! I need progesterone!' Tests detect HCG in urine — embryo is already communicating its presence."},
+{system:"Reproductive",q:"What does the placenta do?",a:"Exchanges gases, nutrients, and waste between maternal and fetal blood. Produces HCG, estrogen, progesterone once established.",hint:"🧠 Placenta = the fetus's life-support system AND its own hormone factory. Once established (~3 months), corpus luteum isn't needed anymore — placenta takes over."},
+{system:"Reproductive",q:"How does the birth control pill work?",a:"Estrogen + progesterone for 21 days → shuts down FSH/LH from pituitary → no follicle development → no ovulation.",hint:"🧠 The pill fakes pregnancy. High estrogen/progesterone = the body thinks it's already pregnant → pituitary stops releasing FSH/LH → no new egg develops."},
+{system:"Reproductive",q:"Vasectomy vs. tubal ligation?",a:"Vasectomy = cuts vas deferens (male). Tubal ligation = cuts/ties oviducts (female). Both hard to reverse.",hint:"🧠 Vasectomy = cuts the vas deferens. Tubal = cuts the tubes (fallopian). Both simply block the highway so sperm and egg never meet."},
+{system:"STIs",q:"Which STIs are bacterial (curable) vs. viral (not curable)?",a:"Bacterial (curable): Chlamydia, Gonorrhea, Syphilis. Viral (NOT curable): Herpes, HPV, HIV.",hint:"🧠 'CGS = bacteria = curable. HHH = viral = here to stay.' Chlamydia/Gonorrhea/Syphilis vs. Herpes/HPV/HIV. Antibiotics can kill bacteria; nothing kills a virus."},
+{system:"STIs",q:"What is chlamydia and why is it dangerous?",a:"Most common US STI. Often asymptomatic in women (5:1 ratio). Can cause PID and infertility. Newborns can get eye infections.",hint:"🧠 Chlamydia = the 'silent' STI. Most women have zero symptoms — that's what makes it so common and dangerous (spreads undetected, causes infertility)."},
+{system:"STIs",q:"What are the 3 stages of syphilis?",a:"Primary = hard chancre (sore). Secondary = body-wide non-itchy rash. Tertiary = aneurysms, dementia, blindness, death.",hint:"🧠 'Sore → Rash → Wreck.' Each stage gets worse and more systemic. The rash doesn't itch — that's a key distinguishing detail. Penicillin cures stages 1 and 2."},
+{system:"STIs",q:"What makes herpes unique?",a:"HSV-2 lies DORMANT in the nervous system. Blisters recur with stress/fever/sunlight. No cure; acyclovir reduces symptoms.",hint:"🧠 Herpes hides in your nerve cells between outbreaks — your immune system can't find it there. Stress flushes it out. C-section if active during birth."},
+{system:"STIs",q:"What is HPV and why does the vaccine matter?",a:"Causes genital warts. Associated with cervical, anal, vulvar, penile cancers. Vaccine available; no cure.",hint:"🧠 HPV is extremely common and mostly asymptomatic, but some strains cause cancer. The vaccine works BEFORE exposure — that's why it's given to preteens. Prevention, not treatment."},
+{system:"STIs",q:"What is HIV and how does it work?",a:"RNA retrovirus. Uses reverse transcriptase to insert into host DNA. Attacks HELPER T-CELLS (CD4). AIDS = CD4 <200/mm3.",hint:"🧠 HIV = Hits Helper T's. No helper T's = no immune coordination = every infection wins. 'Retro' = goes backwards (RNA → DNA). Reverse transcriptase = the tool."},
+{system:"STIs",q:"What are the 3 HIV/AIDS categories?",a:"A (acute): infectious, often no symptoms, CD4 drops to <500. B (chronic): CD4 200–499, swollen nodes. C (AIDS): CD4 <200, opportunistic infections.",hint:"🧠 A-B-C tracks the CD4 decline: A = above 500, B = 200–499, C = below 200. Below 200 = AIDS. As the letter goes up, the CD4 count goes down."},
+{system:"STIs",q:"What is AZT and how does it fight HIV?",a:"Structural analog of Thymine. HIV enzyme inserts AZT instead of T → disrupts viral DNA synthesis. HIV mutates → resistance can develop.",hint:"🧠 AZT = a fake DNA building block. HIV's enzyme grabs it by mistake and gets jammed — like putting the wrong key in a lock. But HIV mutates fast, so it eventually figures out the fake."},
+{system:"STIs",q:"What is HAART?",a:"Highly Active Antiretroviral Therapy — drug cocktail including protease inhibitors + AZT-like drugs. Keeps patients in chronic phase. Not a cure.",hint:"🧠 HAART = HIV's leash. Doesn't kill the virus — just keeps it controlled. Protease inhibitors block viral assembly; AZT blocks replication. Two-front attack = less resistance."},
+{system:"Hint",q:"EXAM TRAP: What stimulates breathing?",a:"CO2 rising (NOT oxygen). Receptors in the medulla oblongata detect rising CO2 and H+ levels in the blood.",hint:"🧠 Think of CO2 as 'trash.' Your brain panics when trash accumulates, not when oxygen dips slightly. Almost everyone guesses oxygen — don't be that person."},
+{system:"Hint",q:"EXAM TRAP: Which filament uses ATP?",a:"MYOSIN uses ATP — to attach AND detach from actin. No ATP after death = rigor mortis (permanent lock).",hint:"🧠 Myosin = Motor = needs fuel. Actin is just the track. The motor runs on ATP; the track just sits there."},
+{system:"Hint",q:"EXAM TRAP: Which muscle is striated AND involuntary?",a:"CARDIAC muscle — the only type that is both striated and involuntary. Skeletal = striated + voluntary. Smooth = non-striated + involuntary.",hint:"🧠 Make a 2x2 grid in your head: striated/voluntary = skeletal, striated/involuntary = cardiac (the oddball), non-striated/involuntary = smooth. Cardiac is always the exception."},
+{system:"Hint",q:"EXAM TRAP: Where does fertilization occur?",a:"FALLOPIAN TUBE (oviduct) — not the uterus. Implantation occurs in the uterus, but fertilization is in the tube.",hint:"🧠 Fertilization = meeting in the tube. Implantation = settling into the uterus. Don't mix them up. Ectopic pregnancy = fertilized egg implants in the tube = emergency."},
+{system:"Hint",q:"QUICK REF: Kidney hormone cheat sheet",a:"ADH = more water reabsorbed (less urine). Aldosterone = more Na+ in (raises BP). ANH = more Na+ out (lowers BP). PTH = raises Ca2+. Erythropoietin = more RBCs.",hint:"🧠 ADH = anti-pee. Aldosterone = pro-sodium, pro-BP. ANH = anti-BP (from heart). PTH = pulls calcium from bone. Erythropoietin = makes more blood when O2 is low."},
+{system:"Hint",q:"QUICK REF: Brain lobe locations + functions",a:"Frontal (forehead) = motor/thinking. Temporal (temples) = hearing/speech comprehension. Parietal (top) = touch/taste. Occipital (back of skull) = vision. Cerebellum (below back) = balance.",hint:"🧠 Your brain's location = its job. Frontal = front of your decisions. Temporal = where your ears are. Occipital = back of head = vision (you can get hit there and 'see stars'). Cerebellum = underneath, for balance."},
+{system:"Hint",q:"QUICK REF: STI bacterial vs. viral summary",a:"Chlamydia = most common, silent in women. Gonorrhea = asymptomatic in 60–80% of females. Syphilis = 3 stages. Herpes = dormant in nerves. HPV = warts + cancer + vaccine. HIV = kills T-helpers.",hint:"🧠 For the exam: know which are curable (C, G, S = bacterial), which have vaccines (HPV), which have no cure (herpes, HPV, HIV), and which attacks immunity (HIV). Those are the 5 most tested facts."},
+{system:"Hint",q:"QUICK REF: Hormone master list",a:"Insulin = lowers glucose. Glucagon = raises glucose. PTH = raises Ca2+. Calcitonin = lowers Ca2+. ADH = retains water. Aldosterone = retains Na+. Cortisol = long stress. Epinephrine = short stress. Melatonin = sleep. Oxytocin = contractions/milk.",hint:"🧠 For each hormone ask: where is it from? what does it raise or lower? Insulin/glucagon = pancreas. PTH/calcitonin = parathyroid/thyroid. ADH/oxytocin = hypothalamus. Cortisol/aldosterone = adrenal cortex. Epinephrine = adrenal medulla."},
+{system:"Hint",q:"QUICK REF: Nephron 3-step process",a:"Filtration (glomerulus) → Reabsorption (tubules, ~99% back) → Secretion (extra waste added back). Result = urine.",hint:"🧠 Coffee maker model: drip everything through (filtration), keep the good stuff (reabsorption), dump extra grounds in (secretion). What drips out = urine. Know WHERE each step happens — the exam asks."},
+];
+
+// ── STATE ──
+let progress = JSON.parse(localStorage.getItem('bioflash_progress') || '{}');
+let activeFilter = 'All';
+let activeMode = 'all';
+let deck = [];
+let deckIdx = 0;
+let isFlipped = false;
+
+function getFilteredCards() {
+  let cards = activeFilter === 'All' ? ALL_CARDS : ALL_CARDS.filter(c => c.system === activeFilter);
+  if (activeMode === 'learn') cards = cards.filter(c => progress[cardKey(c)] === 'learn');
+  if (activeMode === 'unseen') cards = cards.filter(c => !progress[cardKey(c)]);
+  return cards;
+}
+
+function cardKey(card) {
+  return card.system + '::' + card.q.substring(0, 40);
+}
+
+function saveProgress() {
+  localStorage.setItem('bioflash_progress', JSON.stringify(progress));
+}
+
+// ── BUILD UI ──
+function buildFilters() {
+  const el = document.getElementById('filters');
+  const systems = ['All', ...SYSTEMS_ORDER];
+  systems.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (s === 'All' ? ' active' : '');
+    btn.textContent = s;
+    btn.onclick = () => {
+      activeFilter = s;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.textContent === s));
+      rebuildDeck();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function buildSystemGrid() {
+  const el = document.getElementById('systemGrid');
+  el.innerHTML = '';
+  SYSTEMS_ORDER.forEach(sys => {
+    const sysCards = ALL_CARDS.filter(c => c.system === sys);
+    const known = sysCards.filter(c => progress[cardKey(c)] === 'know').length;
+    const pct = sysCards.length ? Math.round((known / sysCards.length) * 100) : 0;
+    const col = SYSTEM_COLORS[sys] || SYSTEM_COLORS.Hint;
+    const item = document.createElement('div');
+    item.className = 'system-item';
+    item.innerHTML = `
+      <div class="system-item-name">
+        <span style="width:8px;height:8px;border-radius:50%;background:${col.dot};flex-shrink:0;display:inline-block;"></span>
+        ${sys}
+      </div>
+      <div class="system-item-bar"><div class="system-item-fill" style="width:${pct}%"></div></div>
+      <div class="system-item-count">${known}/${sysCards.length} known</div>
+    `;
+    item.onclick = () => {
+      activeFilter = sys;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.textContent === sys));
+      rebuildDeck();
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    };
+    el.appendChild(item);
+  });
+}
+
+// ── DECK ──
+function rebuildDeck() {
+  deck = getFilteredCards();
+  deckIdx = 0;
+  isFlipped = false;
+  updateDeckLabel();
+  if (deck.length === 0) {
+    showEmpty();
+  } else {
+    document.getElementById('emptyState').classList.remove('visible');
+    renderCard();
+  }
+  updateStats();
+}
+
+function updateDeckLabel() {
+  const modeLabel = activeMode === 'all' ? 'ALL CARDS' : activeMode === 'learn' ? 'NEED WORK' : 'UNSEEN';
+  const sysLabel = activeFilter === 'All' ? 'ALL SYSTEMS' : activeFilter.toUpperCase();
+  document.getElementById('deckMode').innerHTML = `${sysLabel} · <span id="deckCount">${deck.length}</span> CARDS · ${modeLabel}`;
+}
+
+function renderCard(dir) {
+  if (deck.length === 0) return;
+  const card = deck[deckIdx];
+  const col = SYSTEM_COLORS[card.system] || SYSTEM_COLORS.Hint;
+  const key = cardKey(card);
+  const status = progress[key];
+
+  // Reset flip
+  const inner = document.getElementById('cardInner');
+  inner.classList.remove('flipped');
+  isFlipped = false;
+
+  // System tags
+  ['frontTag','backTag'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = `<span class="card-dot" style="background:${col.dot}"></span>${card.system}`;
+    el.style.background = col.tag;
+    el.style.borderColor = col.border;
+    el.style.color = col.text;
+  });
+
+  // Status stripe
+  ['frontStripe','backStripe'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'card-status-stripe';
+    if (status === 'know') el.classList.add('know');
+    else if (status === 'learn') el.classList.add('learn');
+  });
+
+  document.getElementById('cardNumber').textContent = `${deckIdx + 1} / ${deck.length}`;
+  document.getElementById('cardQ').textContent = card.q;
+  document.getElementById('cardA').textContent = card.a;
+  document.getElementById('cardHint').textContent = card.hint;
+  document.getElementById('hintBox').style.borderLeftColor = col.dot;
+
+  // Progress bar
+  const pct = deck.length ? Math.round(((deckIdx + 1) / deck.length) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${deckIdx + 1} / ${deck.length}`;
+  document.getElementById('navCounter').textContent = `${deckIdx + 1} / ${deck.length}`;
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('cardInner').classList.toggle('flipped', isFlipped);
+}
+
+function nextCard() {
+  if (deck.length === 0) return;
+  if (deckIdx < deck.length - 1) {
+    deckIdx++;
+    renderCard('next');
+  } else {
+    showEmpty();
+  }
+}
+
+function prevCard() {
+  if (deck.length === 0) return;
+  if (deckIdx > 0) {
+    deckIdx--;
+    renderCard('prev');
+  }
+}
+
+function markCard(status) {
+  if (deck.length === 0) return;
+  const card = deck[deckIdx];
+  const key = cardKey(card);
+  progress[key] = status;
+  saveProgress();
+  updateStats();
+  buildSystemGrid();
+
+  showToast(status === 'know' ? '✓ Marked as known' : '✗ Marked for review');
+
+  // Auto-advance
+  setTimeout(() => {
+    if (deckIdx < deck.length - 1) {
+      deckIdx++;
+      // If in learn mode, remove from deck if newly known
+      if (activeMode === 'learn' && status === 'know') {
+        deck.splice(deckIdx - 1, 1);
+        deckIdx = Math.min(deckIdx - 1, deck.length - 1);
+        if (deck.length === 0) { showEmpty(); return; }
+      }
+      renderCard('next');
+    } else {
+      if (activeMode === 'learn' && status === 'know') {
+        deck.splice(deckIdx, 1);
+        deckIdx = Math.max(0, deck.length - 1);
+        if (deck.length === 0) { showEmpty(); return; }
+        renderCard();
+      } else {
+        showEmpty();
+      }
+    }
+  }, 300);
+}
+
+// ── STATS ──
+function updateStats() {
+  const allKeys = ALL_CARDS.map(cardKey);
+  const known = allKeys.filter(k => progress[k] === 'know').length;
+  const learn = allKeys.filter(k => progress[k] === 'learn').length;
+  const unseen = allKeys.filter(k => !progress[k]).length;
+
+  document.getElementById('statKnow').textContent = known;
+  document.getElementById('statLearn').textContent = learn;
+  document.getElementById('statLeft').textContent = unseen;
+  document.getElementById('knownCount').textContent = known;
+  document.getElementById('learnCount').textContent = learn;
+
+  // Progress know count in bar row
+  const deckKnown = deck.filter(c => progress[cardKey(c)] === 'know').length;
+  document.getElementById('progressKnow').textContent = `${deckKnown} known`;
+}
+
+// ── MODES ──
+function setMode(mode) {
+  activeMode = mode;
+  document.getElementById('modeAll').classList.toggle('active', mode === 'all');
+  document.getElementById('modeLearn').classList.toggle('active', mode === 'learn');
+  document.getElementById('modeUnseen').classList.toggle('active', mode === 'unseen');
+  rebuildDeck();
+}
+
+// ── TOOLS ──
+function shuffleDeck() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  deckIdx = 0;
+  renderCard();
+  showToast('⇄ Deck shuffled');
+}
+
+function resetOrder() {
+  rebuildDeck();
+  showToast('↺ Order reset');
+}
+
+function clearProgress() {
+  if (!confirm('Clear all progress? This cannot be undone.')) return;
+  progress = {};
+  saveProgress();
+  rebuildDeck();
+  buildSystemGrid();
+  showToast('⊘ Progress cleared');
+}
+
+function showKnown() {
+  const cards = ALL_CARDS.filter(c => progress[cardKey(c)] === 'know');
+  openModal('Cards you know (' + cards.length + ')', cards);
+}
+
+function showLearn() {
+  const cards = ALL_CARDS.filter(c => progress[cardKey(c)] === 'learn');
+  openModal('Still learning (' + cards.length + ')', cards);
+}
+
+// ── MODAL ──
+function openModal(title, cards) {
+  document.getElementById('modalTitle').textContent = title;
+  const body = document.getElementById('modalBody');
+  if (cards.length === 0) {
+    body.innerHTML = '<p style="color:var(--text3);font-size:14px;padding:20px 0;">No cards here yet.</p>';
+  } else {
+    body.innerHTML = cards.map(c => `
+      <div class="modal-card-item">
+        <div class="modal-card-sys">${c.system}</div>
+        <div class="modal-card-q">${c.q}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+// ── EMPTY ──
+function showEmpty() {
+  const el = document.getElementById('emptyState');
+  el.classList.add('visible');
+  const msgs = {
+    all: "You've flipped through the whole deck. Start over or switch to 'Need work' mode.",
+    learn: "You've cleared all your 'still learning' cards — nice work!",
+    unseen: "No unseen cards left in this filter. You've seen them all!"
+  };
+  document.getElementById('emptyText').textContent = msgs[activeMode] || msgs.all;
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (document.getElementById('modalOverlay').classList.contains('open')) {
+    if (e.key === 'Escape') closeModal();
+    return;
+  }
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+  if (e.key === 'ArrowRight') nextCard();
+  if (e.key === 'ArrowLeft') prevCard();
+  if (e.key === 'k' || e.key === 'K') markCard('know');
+  if (e.key === 'l' || e.key === 'L') markCard('learn');
+  if (e.key === 's' || e.key === 'S') shuffleDeck();
+});
+
+// ── INIT ──
+buildFilters();
+buildSystemGrid();
+rebuildDeck();
+updateStats();
+</script>
+</body>
+</html>
